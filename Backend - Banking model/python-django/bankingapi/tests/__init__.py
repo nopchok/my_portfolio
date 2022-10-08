@@ -1,0 +1,1 @@
+from bankingapi.tests import *
