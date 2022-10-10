@@ -1,14 +1,4 @@
 const fnc = {
-  //   trx: function (db, ) {
-  //     return new Promise(async (resolve, reject) => {
-  //       try {
-  //         const trx = await equire("../configs/databases").transaction();
-  //         resolve(trx);
-  //       } catch (e) {
-  //         reject(e);
-  //       }
-  //     });
-  //   },
   getCurrentBalance: async function (db, id) {
     let result = await db.select("CurrentBalance").from("BankAccount").where("Id", id);
     return result.length == 1 ? result[0].CurrentBalance : null;

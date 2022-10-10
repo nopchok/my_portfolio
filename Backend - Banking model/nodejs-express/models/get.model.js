@@ -1,4 +1,4 @@
-const { ErrorMessage } = require("../configs/errorMethods");
+const errMsg = require("../configs/errorMessage");
 
 const db = require("../configs/databases");
 const common = require("../models/common");
@@ -21,6 +21,8 @@ const methods = {
     return new Promise(async (resolve, reject) => {
       try {
         const { id } = param;
+
+        if (await common.count(db, "BankAccount", "Id", id) == 0) throw new Error(errMsg.bankAccountNotFound);
 
         const TransactionHistory = await db.select().from("TransactionHistory").where("BankAccountId", id);
 
