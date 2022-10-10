@@ -1,4 +1,4 @@
-const { ErrorMessage } = require("../configs/errorMethods");
+const errMsg = require("../configs/errorMessage");
 
 const db = require("../configs/databases");
 const common = require("../models/common");
@@ -35,13 +35,11 @@ const methods = {
       try {
         const { from, to, amount, transaction_type, relate_transaction_type } = param;
 
-        const count_from = await common.count(trx, "BankAccount", "Id", from);
-        if (count_from == 0) throw new Error("Bankaccount not found");
-        const count_to = await common.count(trx, "BankAccount", "Id", to);
-        if (count_to == 0) throw new Error("Bankaccount not found");
+        if (await common.count(trx, "BankAccount", "Id", from) == 0) throw new Error(errMsg.bankAccountNotFound);
+        if (await common.count(trx, "BankAccount", "Id", to) == 0) throw new Error(errMsg.bankAccountNotFound);
 
         const CurrentBalance = await common.getCurrentBalance(trx, from);
-        if (CurrentBalance < amount) throw new Error("Current balance is not enough");
+        if (CurrentBalance < amount) throw new Error(errMsg.balanceNotEnough);
 
         let transaction_type_id = await common.getTransactionTypeId(trx, transaction_type);
         let relate_transaction_type_id = await common.getTransactionTypeId(trx, relate_transaction_type);

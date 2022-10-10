@@ -24,7 +24,7 @@ const methods = {
 
         const TransactionHistory = await db.select().from("TransactionHistory").where("BankAccountId", id);
 
-        resolve({ success: true, data: TransactionHistory });
+        resolve({ success: true, data: TransactionHistory[0] });
       } catch (error) {
         reject(error);
       }

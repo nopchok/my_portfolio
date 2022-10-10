@@ -11,6 +11,13 @@ module.exports = {
     error.status = 304;
     return error;
   },
+  ErrorInvalidParameter(errors) {
+    let error = new Error();
+    error.message = "Invalid Parameters";
+    error.errors = errors;
+    error.status = 400;
+    return error;
+  },
   ErrorBadRequest(msg) {
     let error = new Error(msg);
     error.message = msg;

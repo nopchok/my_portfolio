@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const get = require("../../controllers/get.controller");
 
-router.get("/currentbalance", get.currentbalance);
-router.get("/transactionhistory", get.transactionhistory);
+router.post("/currentbalance", get.validateCurrentbalance(), get.currentbalance);
+router.post("/transactionhistory", get.validateTransactionhistory(), get.transactionhistory);
 
 module.exports = router;
