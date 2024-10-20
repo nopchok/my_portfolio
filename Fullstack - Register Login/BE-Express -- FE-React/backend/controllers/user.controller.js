@@ -5,13 +5,13 @@ const { body, validationResult } = require("express-validator");
 
 const methods = {
   validate_register: [
-    body('email').isEmail(),
+    body('email', 'Invalid Email').isEmail(),
     body('password').exists(),
     body('c_password', "Passwords don't match").exists()
       .custom((value, { req }) => value === req.body.password)
   ],
   validate_login: [
-    body('email').isEmail(),
+    body('email', 'Invalid Email').isEmail(),
     body('password').exists(),
   ],
   async register(req, res) {

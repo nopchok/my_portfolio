@@ -1,4 +1,5 @@
-const errMsg = require("../configs/errorMessage");
+// const errMsg = require("../configs/errorMessage");
+const err = require("../configs/errorMethods");
 
 const db = require("../configs/databases");
 
@@ -18,7 +19,7 @@ const methods = {
 
         const exist = await trx('users').where({ email: email });
 
-        if (exist.length > 0) throw new Error('Email exist');
+        if (exist.length > 0) throw err.ErrorMessage('Email exist');
 
         const new_id = await trx
           .insert({
@@ -42,11 +43,11 @@ const methods = {
         let { email, password } = param;
         const data = await db('users').where({ email: email });
 
-        if (data.length == 0) throw new Error('Not found');
+        if (data.length == 0) throw err.ErrorMessage('Not found email');
 
         const isLogin = await bcrypt.compare(password, data[0].password);
 
-        if (!isLogin) throw new Error('Password not match')
+        if (!isLogin) throw err.ErrorMessage('Incorrect password')
 
         const token = jwt.sign({ email: email }, config.secret, { expiresIn: config.jwt_expire });
         resolve({ success: true, token: token });
