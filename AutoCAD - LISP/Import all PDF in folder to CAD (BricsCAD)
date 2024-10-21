@@ -1,0 +1,49 @@
+(vl-load-com)
+(defun c:_PurgeAll()
+    (setq acadObj (vlax-get-acad-object))
+    (setq doc (vla-get-ActiveDocument acadObj))
+
+    (vla-PurgeAll doc)
+)
+(defun C:RUNIMPORTPDFFOLDER()
+	(setq fn (getfiled "Select Some of .PDF Files : " "" "pdf" 4 )
+		fold (vl-filename-directory fn)
+	)
+	
+	(setq svfold (strcat fold "\\CADFILE" ))
+  
+	(if (null (vl-file-directory-p svfold))
+		(vl-mkdir svfold)
+	)
+	
+	(setq full_name_list- (vl-directory-files fold "*.pdf" 1)
+		full_name_list (mapcar (function (lambda (x) x)) full_name_list-)
+	)
+	
+	(setq ifile 1)
+	(foreach file full_name_list
+		(princ (strcat "\nImporting... " file))
+		
+		(setq fn (strcat fold "\\" file))
+		
+		(command "_ERASE" "ALL" "")
+		(c:_PurgeAll)
+		(command "_-pdfimport" "_Fi" fn 1 (list 0 0 0) 1 0 )
+		
+		(command "_z" "e")
+		(setq cadfile (vl-string-subst ".dwg" ".pdf" file))
+		
+		(setq cadpath (strcat svfold "\\" cadfile ))
+		(if (findfile cadpath)
+			(progn
+				(command "_SAVEAS" 2013 cadpath "_y")
+			)
+			(progn
+				(command "_SAVEAS" 2013 cadpath)
+			)
+		)
+		(setq ifile (+ ifile 1))
+	)
+	
+	(princ)
+)
