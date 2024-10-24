@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Klook - most package",
+    "version": "1.0",
+    "permissions": [
+    ],
+    "content_scripts": [
+        {
+            "matches": ["*://*.klook.com/*activity/*"],
+            "js": ["contentScript.js"]
+        }
+    ]
+}
