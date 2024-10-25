@@ -1,0 +1,5 @@
+
+		<h1><?php echo $this->message ?></h1>
+
+
+		
