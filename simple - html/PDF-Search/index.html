@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multi-PDF Search</title>
+
+  <script src="browser@4.js"></script>
+
+  <script src="pdf.min.js"></script>
+  <script>
+    // Point pdf.js at its worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "pdf.worker.min.js";
+  </script>
+  
+  <link rel="stylesheet" href="jquery.dataTables.min.css" />
+  <script src="jquery-3.7.1.min.js"></script>
+  <script src="jquery.dataTables.min.js"></script>
+
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased p-6">
+  <div class="container mx-auto">
+    <div class="flex items-center mb-6">
+      <svg width="36" height="36" viewBox="0 0 24 24" class="mr-2 text-blue-600"><path fill="currentColor" d="M5 3h14a2 2 0 0 1 2 2v11.5a1.5 1.5 0 0 1-1.5 1.5H9l-4 4v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2m2 5v2h10V8z"/></svg>
+      <h1 class="text-3xl font-bold m-0 text-gray-900">Multi-PDF Text Search</h1>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow-md mb-4">
+      <div class="grid md:grid-cols-12 gap-3 md:gap-3 lg:gap-4 items-end">
+        <!-- File picker (individual files) -->
+        <div class="md:col-span-8">
+          <label for="pdfInput" class="block text-sm font-medium text-gray-700">Upload PDFs</label>
+          <input id="pdfInput" class="mt-1 block w-full text-sm text-gray-500
+                                      file:border-gray-300
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-full file:border
+                                      file:text-sm file:font-semibold
+                                      file:bg-white file:text-gray-700
+                                      hover:file:bg-gray-50" type="file" accept="application/pdf" multiple />
+          <p class="mt-2 text-sm text-gray-400">
+            Select one or more PDF files. They’re processed locally in your browser.
+          </p>
+        </div>
+
+        <!-- Folder picker (recursive) -->
+        <div class="md:col-span-8">
+          <label class="block text-sm font-medium text-gray-700">Upload Folder</label>
+
+          <div class="flex items-center gap-3 mt-1">
+            <!-- Hidden real input that supports directory selection; triggered by button -->
+            <input id="folderInput" type="file" webkitdirectory directory multiple class="hidden" />
+            <button id="btnPickFolder" class="bg-white border border-gray-300 rounded-full px-6 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none" type="button">Choose Folder…</button>
+            
+            <div class="flex items-center gap-2 mt-2">
+              <input id="includeSubfolders" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" >
+              <label for="includeSubfolders" class="text-sm text-gray-900">Include subfolders</label>
+
+              <!-- ปุ่มไอคอน + tooltip -->
+              <div class="relative group">
+                <button type="button" aria-label="Regex help" class="text-gray-500 hover:text-gray-700">
+                  <!-- ไอคอน (i) -->
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1-2h-2V7h2v7Z"/>
+                  </svg>
+                </button>
+
+                <!-- กล่อง tooltip -->
+                <div role="tooltip"
+                    class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition
+                            absolute left-1/2 -translate-x-1/2 top-7 z-10 w-80 rounded-xl border
+                            bg-white p-3 text-xs text-gray-800 shadow-lg">
+                    <p>✅ เมื่อต้องการ Upload file ทุก Folder</p>
+                    <p>❗️❗️❗️ ใช้เวลานานในการ Upload ❗️❗️❗️</p>
+                </div>
+              </div>
+              
+            </div>
+            
+          </div>
+          
+        </div>
+
+        
+        <div class="md:col-span-4 flex flex-col gap-2">
+          <!-- Row 1: Append Library -->
+          <div class="flex items-center gap-3">
+            <input id="appendLibrary" type="checkbox"
+              class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+            <label for="appendLibrary" class="text-sm text-gray-900">Append Library</label>
+        
+            <!-- ปุ่มไอคอน + tooltip -->
+            <div class="relative group">
+              <button type="button" aria-label="Regex help" class="text-gray-500 hover:text-gray-700">
+                <!-- ไอคอน (i) -->
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+                  <path
+                    d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1-2h-2V7h2v7Z" />
+                </svg>
+              </button>
+        
+              <!-- กล่อง tooltip -->
+              <div role="tooltip"
+                class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition
+                        absolute left-1/2 -translate-x-1/2 top-7 z-10 w-80 rounded-xl border
+                        bg-white p-3 text-xs text-gray-800 shadow-lg">
+                <p>✅ เมื่อต้องการเพิ่ม PDF ใน Library ปัจจุบัน</p>
+              </div>
+            </div>
+          </div>
+        
+          <!-- Row 2: Buttons -->
+          <div class="flex gap-3">
+            <button id="btnClear"
+              class="bg-white border border-gray-300 rounded-full px-6 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none"
+              type="button">
+              Clear Library
+            </button>
+            
+
+            <p class="mt-2 text-sm text-gray-500">
+              <mark class="bg-blue-100 rounded-sm" id="libSummary">No files indexed.</mark>
+            </p>
+          </div>
+        
+        </div>
+        
+        
+        
+        
+
+
+      </div>
+
+      <div class="mt-4" id="indexStatus">
+        <div class="flex justify-between text-sm mb-1">
+          <span id="statusText" class="text-gray-500">Upload PDFs</span>
+          <span class="text-gray-500"><span id="pagesDone">0</span>/<span id="pagesTotal">0</span> pages</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-1.5">
+          <div id="progressBar" class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg mb-6">
+      <div class="grid lg:grid-cols-3 gap-6 items-end">
+        <div class="lg:col-span-2">
+          <label for="query" class="block text-sm font-medium text-gray-700">Search text</label>
+          <div class="mt-1 flex rounded-full shadow-sm">
+            <input autocomplete="off" id="query" class="flex-1 min-w-0 block w-full px-4 py-2 rounded-l-full border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" type="text" placeholder="e.g., pressure relief valve" />
+            <button id="btnSearch" class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-r-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" type="button">Search</button>
+          </div>
+          
+          <p class="mt-4 text-sm text-gray-500">
+            <span id="resultSummary">No search yet.</span>
+            <button id="btnExport" class="ml-4 px-4 py-1 border border-gray-300 rounded-full text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" type="button" disabled>Export CSV</button>
+          </p>
+        </div>
+
+        <div class="lg:col-span-1">
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center">
+              <div class="relative inline-flex items-center">
+                <input class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" type="checkbox" id="caseSensitive">
+                <label class="ml-2 block text-sm text-gray-900" for="caseSensitive">Case sensitive</label>
+                
+                <!-- ปุ่มไอคอน + tooltip -->
+                <div class="relative group">
+                  <button type="button" aria-label="Regex help" class="ml-2 text-gray-500 hover:text-gray-700">
+                    <!-- ไอคอน (i) -->
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1-2h-2V7h2v7Z"/>
+                    </svg>
+                  </button>
+
+                  <!-- กล่อง tooltip -->
+                  <div role="tooltip"
+                      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition
+                              absolute left-1/2 -translate-x-1/2 top-7 z-10 w-80 rounded-xl border
+                              bg-white p-3 text-xs text-gray-800 shadow-lg">
+                      <p class="mb-2">✅ เมื่อต้องการหา สนใจตัวพิมพ์เล็ก/ใหญ่</p>
+                      
+                      <p>Example <strong>“Project”</strong></p>
+                      <p>✔️ "the <mark class="bg-yellow-200 rounded-sm">Project</mark>’s requirements"</p>
+                      <p>❌ "during <mark class="bg-red-200 rounded-sm">project</mark> execution"</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <div class="relative inline-flex items-center">
+                <input class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" type="checkbox" id="wholeWord">
+                <label class="ml-2 block text-sm text-gray-900" for="wholeWord">Whole word</label>
+                
+                <!-- ปุ่มไอคอน + tooltip -->
+                <div class="relative group">
+                  <button type="button" aria-label="Regex help" class="ml-2 text-gray-500 hover:text-gray-700">
+                    <!-- ไอคอน (i) -->
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1-2h-2V7h2v7Z"/>
+                    </svg>
+                  </button>
+
+                  <!-- กล่อง tooltip -->
+                  <div role="tooltip"
+                      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition
+                              absolute left-1/2 -translate-x-5/6 top-7 z-10 w-80 rounded-xl border
+                              bg-white p-3 text-xs text-gray-800 shadow-lg">
+                      <p class="mb-2">✅ เมื่อต้องการหาแบบตรงทั้งคำ (ไม่ติดกับตัวอักษรอื่น)</p>
+
+                      <p>Example <strong>“correct”</strong></p>
+                      <p>✔️ "ensure that the <mark class="bg-yellow-200 rounded-sm">correct</mark> checking"</p>
+                      <p>❌ "The minimum <mark class="bg-red-200 rounded-sm">corrected</mark> area shall be"</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <div class="relative inline-flex items-center">
+                <input class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" type="checkbox" id="asRegex">
+                <label class="ml-2 block text-sm text-gray-900" for="asRegex">Use RegEx</label>
+                
+                <!-- ปุ่มไอคอน + tooltip -->
+                <div class="relative group">
+                  <button type="button" aria-label="Regex help" class="ml-2 text-gray-500 hover:text-gray-700">
+                    <!-- ไอคอน (i) -->
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1-2h-2V7h2v7Z"/>
+                    </svg>
+                  </button>
+
+                  <!-- กล่อง tooltip -->
+                  <div role="tooltip"
+                      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition
+                              absolute left-1/2 -translate-x-1/2 top-7 z-10 w-120 rounded-xl border
+                              bg-white p-3 text-xs text-gray-800 shadow-lg">
+                    <p class="mb-2">✅ เมื่อต้องการใช้ Regular Expression</p>
+                    <p class="mb-1">ตัวอย่าง RegEx ที่ใช้บ่อย</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                      <li><code>cryogenic(.*)valve</code> → ค้นหาข้อความที่เริ่มด้วย <em>cryogenic</em> และจบด้วย <em>valve</em></li>
+                    </ul>
+                    <div class="mt-2 text-[10px] text-gray-600">
+                      หมายเหตุ: ใน JavaScript เครื่องหมายจุด <code>.</code> ไม่จับอักขระขึ้นบรรทัดใหม่โดยค่าเริ่มต้น
+                      ให้ใช้ flag <code>s</code> (เช่น <code>/cryogenic.*valve/s</code>) หรือใช้แพทเทิร์น <code>[\s\S]*</code> แทน <code>.*</code> เมื่อต้องข้ามหลายบรรทัด
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+            </div>
+
+            <!-- ✅ New Context slider -->
+            <div>
+              
+              <div class="relative inline-flex items-center">
+                <label for="contextRange" class="block text-sm text-gray-900">Max-chars
+                  <span id="contextValue" class="text-sm text-gray-700">300</span>
+                </label>
+              
+                <!-- ปุ่มไอคอน + tooltip -->
+                <div class="relative group">
+                  <button type="button" aria-label="Regex help" class="ml-2 text-gray-500 hover:text-gray-700">
+                    <!-- ไอคอน (i) -->
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1-2h-2V7h2v7Z"/>
+                    </svg>
+                  </button>
+
+                  <!-- กล่อง tooltip -->
+                  <div role="tooltip"
+                      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition
+                              absolute left-1/2 -translate-x-5/6 top-7 z-10 w-45 rounded-xl border
+                              bg-white p-3 text-xs text-gray-800 shadow-lg">
+                      <p>ปรับจำนวนตัวอักษรที่จะแสดง</p>
+                  </div>
+                </div>
+              </div>
+
+              <input 
+                id="contextRange"
+                type="range" 
+                min="100" 
+                max="600" 
+                value="300"
+                class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-blue-600"
+                oninput="document.getElementById('contextValue').textContent = this.value"
+              />
+            </div>
+            
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden text-sm text-gray-500">
+      <div class="p-4">
+        <table id="resultSearch" class="min-w-full divide-y divide-gray-200 display">
+          <thead>
+            <tr>
+              <th class="dt-head-center">#</th>
+              <th class="dt-head-center">File / Path</th>
+              <th class="dt-head-center">Page</th>
+              <th class="dt-head-center">Snippet</th>
+              <th class="dt-head-center"></th>
+            </tr>
+            <tr id="filter">
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- State ---
+    const library = []; // [{ name, path, file, url, pages: [{num, text}] }]
+    const seenKeys = new Set(); // prevent duplicates across multiple selections
+    let isIndexing = false;
+
+    // --- Elements ---
+    const pdfInput = document.getElementById('pdfInput');
+    const folderInput = document.getElementById('folderInput');
+    const btnPickFolder = document.getElementById('btnPickFolder');
+    const btnClear = document.getElementById('btnClear');
+    // const btnReindex = document.getElementById('btnReindex');
+    const btnSearch = document.getElementById('btnSearch');
+    const btnExport = document.getElementById('btnExport');
+    const queryEl = document.getElementById('query');
+    const caseSensitiveEl = document.getElementById('caseSensitive');
+    const asRegexEl = document.getElementById('asRegex');
+    const wholeWordEl = document.getElementById('wholeWord');
+    const indexStatus = document.getElementById('indexStatus');
+    const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('statusText');
+    const pagesDoneEl = document.getElementById('pagesDone');
+    const pagesTotalEl = document.getElementById('pagesTotal');
+    const libSummary = document.getElementById('libSummary');
+    const resultsBody = document.getElementById('resultsBody');
+    const resultSummary = document.getElementById('resultSummary');
+    const placeholderRow = document.getElementById('placeholderRow');
+    const includeSubfoldersEl = document.getElementById('includeSubfolders');
+    const contextRangeEl = document.getElementById('contextRange');
+    const appendLibraryEl = document.getElementById('appendLibrary');
+    
+    // --- DataTable instance ---
+    let dt = null;
+
+    function initDataTable() {
+      const table = document.getElementById('resultSearch');
+
+      if (!$.fn.DataTable.isDataTable('#resultSearch')) {
+        // Add filter inputs to each filter cell
+        $('#resultSearch tr#filter th').each(function (i) {
+          if ([1, 2, 3].includes(i)) {
+            $(this).html('<input type="text" placeholder="Filter…" class="w-full px-2 py-1 text-xs border rounded"/>');
+          } else {
+            // Skip # and "Open" column
+            $(this).html('');
+          }
+        });
+
+        dt = $('#resultSearch').DataTable({
+          deferRender: true,
+          pageLength: 25,
+          lengthMenu: [
+            [10, 25, 50, 100, -1],
+            [10, 25, 50, 100, 'All']
+          ],
+          orderCellsTop: true,
+          order: [[0, 'asc']],
+          columns: [
+            { data: 'idx', width: '30px', className: 'text-center' },
+            { data: 'file' },
+            { data: 'page', width: '30px', className: 'text-center' },
+            {
+              data: 'snippetHtml',
+              orderable: false,
+              searchable: true,
+              render: function (data, type, row) {
+                return type === 'display' ? data : row.snippet;
+              }
+            },
+            {
+              data: 'open',
+              orderable: false,
+              searchable: false,
+              width: '60px',
+              className: 'text-center',
+              render: function(data, type, row) {
+                return `<a href="${row.url}#page=${row.page}&start=${row.locationText[0]}&total=${row.locationText[1]}"
+                            target="_blank"
+                            class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
+                          Open
+                        </a>`
+              }
+            }
+          ],
+          initComplete: function () {
+            const api = this.api();
+            // Apply per-column filtering
+            api.columns().every(function (i) {
+              const $input = $('#resultSearch thead tr#filter th').eq(i).find('input');
+              if ($input.length) {
+                $input.on('keyup change clear', () => {
+                  const val = $input.val();
+                  if (this.search() !== val) {
+                    this.search(val).draw();
+                  }
+                });
+              }
+            });
+          }
+        });
+      } else {
+        dt = $('#resultSearch').DataTable();
+      }
+
+      return dt;
+    }
+
+
+    // --- Helpers ---
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'}[m]));
+    }
+
+    function buildRegex(query, {caseSensitive, asRegex, wholeWord}) {
+      let source = query;
+      if (!asRegex) {
+        source = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+      if (wholeWord) {
+        source = `\\b${source}\\b`;
+      }
+      const flags = caseSensitive ? 'g' : 'gi';
+      return new RegExp(source, flags);
+    }
+
+    function makeSnippet(text, start, end) {
+      const maxChars = parseInt(document.getElementById('contextRange').value, 10) || 160;
+      const context = Math.max(20, Math.floor((maxChars - (end - start)) / 2));
+      const from = Math.max(0, start - context);
+      const to = Math.min(text.length, end + context);
+      const prefix = from > 0 ? '…' : '';
+      const suffix = to < text.length ? '…' : '';
+      const before = escapeHtml(text.slice(from, start));
+      const hit = `<mark class="bg-yellow-200 rounded-sm p-0.5">${escapeHtml(text.slice(start, end))}</mark>`;
+      const after = escapeHtml(text.slice(end, to));
+      return prefix + before + hit + after + suffix;
+    }
+
+    function updateLibSummary() {
+      const files = library.length;
+      const pages = library.reduce((sum, d) => sum + d.pages.length, 0);
+      libSummary.textContent = files
+        ? `Indexed ${files} file${files>1?'s':''}, ${pages} page${pages!==1?'s':''}.`
+        : 'No files indexed.';
+      // btnReindex.disabled = files === 0;
+    }
+
+    function setProgress(done, total, label = 'Indexing…') {
+      // indexStatus.hidden = total === 0 && !label;
+      pagesDoneEl.textContent = done;
+      pagesTotalEl.textContent = total;
+      statusText.textContent = label;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      progressBar.style.width = pct + '%';
+      progressBar.ariaValueNow = String(pct);
+    }
+
+    function clearResults() {
+      if ($.fn.DataTable.isDataTable('#resultSearch')) {
+        $('#resultSearch').DataTable().clear().draw();
+      }
+      btnExport.disabled = true;
+    }
+
+    function exportCSV(rows) {
+      const header = ['Index','File / Path','Page','Snippet'];
+      const csvRows = [header.join(',')];
+      for (const r of rows) {
+        // Basic CSV escaping (wrap in quotes, double any quotes)
+        const safe = [r.idx, r.file, r.page, r.snippet.replaceAll('"','""')]
+          .map(v => `"${v}"`).join(',');
+        csvRows.push(safe);
+      }
+      const blob = new Blob([csvRows.join('\n')], {type: 'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'pdf-search-results.csv';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      a.remove();
+    }
+
+
+
+    // --- Auto-refresh search on option changes ---
+    function debounce(fn, delay = 250) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    const refreshSearch = debounce(() => {
+      if (!queryEl.value || library.length === 0) return;
+      searchNow();
+    }, 300);
+
+    // Context slider (Max-chars)
+    contextRangeEl.addEventListener('input', () => {
+      document.getElementById('contextValue').textContent = contextRangeEl.value;
+      refreshSearch();
+    });
+
+    // Case Sensitive toggle
+    caseSensitiveEl.addEventListener('change', refreshSearch);
+
+    // Whole Word toggle
+    wholeWordEl.addEventListener('change', refreshSearch);
+
+    // RegEx toggle
+    asRegexEl.addEventListener('change', refreshSearch);
+
+
+
+    // --- Indexing ---
+    async function readPdf(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pages = [];
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const textContent = await page.getTextContent();
+        const text = textContent.items.map(i => i.str).join(' ');
+        pages.push({ num: p, text });
+        // Yield to UI for big docs
+        if (p % 5 === 0) await sleep(0);
+      }
+      return { numPages: pdf.numPages, pages };
+    }
+
+    function fileIsPdf(f) {
+      // Some browsers may not set the type; fall back to extension check
+      return f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+    }
+
+    function fileKey(f) {
+      const path = f.webkitRelativePath || f.name;
+      return `${path}|${f.size}|${f.lastModified}`;
+    }
+
+    function isTopLevel(f) {
+      const rel = (f.webkitRelativePath || '').replaceAll('\\','/');
+      if (!rel) return true; // non-folder selections
+      const parts = rel.split('/');
+      return parts.length === 2; // [root, file]
+    }
+
+    async function indexFiles(fileList, opts = {}) {
+      const { flatOnly = false } = opts;
+      if (!fileList || fileList.length === 0) return;
+
+      // Filter only PDFs and de-duplicate
+      let files = Array.from(fileList).filter(fileIsPdf);
+      if (flatOnly) {
+        files = files.filter(isTopLevel);
+      }
+      const beforeCount = files.length;
+      
+      files = files.filter(f => {
+        const key = fileKey(f);
+        if (seenKeys.has(key)) return false;
+        seenKeys.add(key);
+        return true;
+      });
+
+      if (files.length === 0) {
+        // Show a brief note if everything was filtered out
+        resultSummary.textContent = beforeCount === 0
+          ? 'No PDFs found in selection.'
+          : 'All selected PDFs were already indexed.';
+        return;
+      }
+
+      
+      // Confirm note
+      const proceed = confirm(
+        `You are about to upload ✔️ ${beforeCount} ✔️ PDF file(s).\n\n` +
+        `Click OK to proceed or Cancel to abort.`
+      );
+
+      if (!proceed) {
+        return;
+      }
+      
+      isIndexing = true;
+      clearResults();
+
+
+      if( !appendLibraryEl.checked ) btnClear.click();
+      
+      // Prepare totals (we don’t know page counts yet; update as we go)
+      setProgress(0, 0, 'Preparing…');
+      let totalPages = 0, donePages = 0;
+
+      // indexStatus.hidden = false;
+
+      let iFile = 0;
+      for (const f of files) {
+        try {
+          const { numPages, pages } = await readPdf(f);
+          totalPages += numPages;
+
+          const url = URL.createObjectURL(f);
+          const displayName = f.webkitRelativePath || f.name;
+          library.push({
+            name: displayName,
+            path: f.webkitRelativePath || '',
+            file: f,
+            url,
+            pages
+          });
+
+          donePages += numPages;
+          // setProgress(donePages, totalPages, `Indexed: ${displayName}`);
+          
+          iFile++;
+          t = iFile + '/' + beforeCount;
+          statusText.textContent = `${t} Indexing: ${(f.webkitRelativePath || f.name)}`;
+        } catch (err) {
+          console.error(err);
+          // alert(`Failed to read ${(f.webkitRelativePath || f.name)}: ${err.message || err}`);
+        }
+      }
+
+      isIndexing = false;
+      setProgress(totalPages, totalPages, 'Done ' + t);
+      updateLibSummary();
+      // if (library.length === 0) indexStatus.hidden = true;
+    }
+
+    // --- Searching ---
+    function searchNow() {
+      const q = queryEl.value;
+      if (!q) {
+        resultSummary.textContent = 'Enter a query to search.';
+        clearResults();
+        return;
+      }
+      if (library.length === 0) {
+        resultSummary.textContent = 'Upload and index PDFs first.';
+        clearResults();
+        return;
+      }
+
+      const re = buildRegex(q, {
+        caseSensitive: caseSensitiveEl.checked,
+        asRegex: asRegexEl.checked,
+        wholeWord: wholeWordEl.checked
+      });
+
+      // (Re)use a single DataTable instance
+      dt = initDataTable();
+      dt.clear();
+
+      const rows = [];
+      let idx = 1;
+
+      for (const doc of library) {
+        for (const page of doc.pages) {
+          const text = page.text || '';
+          const textLength = text.length;
+          const matches = text.matchAll(re);
+          for (const m of matches) {
+            const start = m.index ?? 0;
+            const end = start + (m[0]?.length || 0);
+            const locationText = [start, textLength];
+
+            const snippetHtml = makeSnippet(text, start, end);
+            const snippetPlain = snippetHtml.replace(/<[^>]+>/g, '');
+
+            rows.push({
+              idx,
+              url: doc.url,
+              file: doc.name,
+              page: String(page.num),
+              locationText,
+              snippet: snippetPlain,     // plain (for CSV / sort)
+              snippetHtml,               // highlighted HTML (for display)
+            });
+
+            idx++;
+          }
+        }
+      }
+
+      dt.rows.add(rows).draw();
+
+      // Summary + CSV
+      const filesWithHits = new Set(rows.map(r => r.file)).size;
+      resultSummary.textContent = rows.length
+        ? `Found ${rows.length} match${rows.length!==1?'es':''} in ${filesWithHits} file${filesWithHits!==1?'s':''}.`
+        : 'No matches found.';
+
+      btnExport.disabled = rows.length === 0;
+      btnExport.onclick = () => {
+        // Export only the fields we need and the plain snippet
+        const exportable = rows.map(({ idx, file, page, snippet }) => ({ idx, file, page, snippet }));
+        exportCSV(exportable);
+      };
+    }
+
+    // --- Events ---
+    pdfInput.addEventListener('change', async (e) => {
+      await indexFiles(e.target.files);
+    });
+
+    btnPickFolder.addEventListener('click', () => folderInput.click());
+    folderInput.addEventListener('change', async (e) => {
+      await indexFiles(e.target.files, { flatOnly: !includeSubfoldersEl.checked });
+    });
+
+    btnClear.addEventListener('click', () => {
+      // Revoke URLs
+      for (const d of library) {
+        try { URL.revokeObjectURL(d.url); } catch {}
+      }
+      library.length = 0;
+      seenKeys.clear();
+      pdfInput.value = '';
+      folderInput.value = '';
+      // indexStatus.hidden = true;
+      setProgress(0,0,'Upload PDFs');
+      updateLibSummary();
+      clearResults();
+    });
+
+    // btnReindex.addEventListener('click', async () => {
+    //   const lists = [];
+    //   if (pdfInput.files?.length) lists.push({ files: Array.from(pdfInput.files), flatOnly: false });
+    //   if (folderInput.files?.length) lists.push({ files: Array.from(folderInput.files), flatOnly: !includeSubfoldersEl.checked });
+    //   if (lists.length) {
+    //     btnClear.click();
+    //     for (const { files, flatOnly } of lists) {
+    //       await indexFiles(files, { flatOnly });
+    //     }
+    //   }
+    // });
+
+    btnSearch.addEventListener('click', searchNow);
+    queryEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); searchNow(); }
+    });
+  </script>
+</body>
+</html>
