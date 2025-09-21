@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Request Collector",
+  "version": "1.2",
+  "permissions": [
+    "tabs",
+    "storage",
+    "webRequest",
+    "sidePanel",
+    "storage"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "service_worker.js"
+  },
+  "action": {
+    "default_title": "Request Collector"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/*"],
+      "js": ["content_script.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body {
+        height: 100%;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+      }
+      button{
+        margin:4px 0; width:100%
+      }
+      #out {
+        flex: 1;                /* fill remaining vertical space */
+        overflow: auto;
+        padding: 8px;
+        background: #fafafa;
+        font-family: monospace;
+        font-size: 12px;
+        line-height: 1.25;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="start">Start capture (active tab)</button>
+    <button id="stop">Stop capture</button>
+    <button id="refresh">Refresh list</button>
+    <pre id="out">No data yet</pre>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
